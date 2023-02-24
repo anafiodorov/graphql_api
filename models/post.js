@@ -1,24 +1,23 @@
 const Sequelize = require('sequelize');
 const sequelize = require('../db.config');
 
-const PostSchema = sequelize.define('post', {
+const Post = sequelize.define('post', {
+  id: {
+    type: Sequelize.INTEGER,
+    autoIncrement: true,
+    primaryKey: true,
+    allowNull: false,
+  },
   title: {
     type: Sequelize.STRING,
     allowNull: false,
   },
   imageUrl: {
     type: Sequelize.STRING,
-    allowNull: false,
   },
   content: {
     type: Sequelize.STRING,
-    allowNull: false,
-  },
-  creator: {
-    type: Sequelize.INTEGER,
-    ref: 'User',
-    rallowNull: false,
   },
 });
 
-module.exports = PostSchema;
+module.exports = Post;

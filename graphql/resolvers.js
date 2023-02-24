@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const Post = require('../models/post');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 
@@ -33,6 +34,8 @@ module.exports = {
       name: userInput.name,
       email: userInput.email,
       password: hashedPw,
+      status: userInput.status,
+      posts: userInput.posts,
     });
     console.log({ ...createdUser });
     return { ...createdUser.dataValues };
@@ -62,7 +65,82 @@ module.exports = {
     );
     return { token: token, userId: user.id.toString() };
   },
-
+  createPost: async ({ postInput }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!');
+      error.code = 401;
+      throw error;
+    }
+    const errors = [];
+    if (
+      validator.isEmpty(postInput.title) ||
+      !validator.isLength(postInput.title, { min: 5 })
+    ) {
+      errors.push({ message: 'Title is invalid' });
+    }
+    if (
+      validator.isEmpty(postInput.content) ||
+      !validator.isLength(postInput.content, { min: 5 })
+    ) {
+      errors.push({ message: 'Content is invalid' });
+    }
+    if (errors.length > 0) {
+      console.log(errors);
+      const error = new Error('Invalid input.');
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+    const user = await User.findByPk(req.userId);
+    if (!user) {
+      const error = new Error('Invalid user.');
+      error.data = errors;
+      error.code = 401;
+      throw error;
+    }
+    console.log(user.dataValues);
+    console.log(postInput.title);
+    console.log(postInput.content);
+    const post = await Post.create({
+      title: postInput.title,
+      imageUrl: postInput.imageUrl,
+      content: postInput.content,
+      userId: user.dataValues.id,
+    });
+    console.log(post);
+    console.log('debug return');
+    const debugObj = {
+      ...post.dataValues,
+      createdAt: post.dataValues.createdAt.toISOString(),
+      updatedAt: post.dataValues.updatedAt.toISOString(),
+    };
+    console.log(debugObj);
+    // user.posts.push(post);
+    return {
+      ...post.dataValues,
+      createdAt: post.dataValues.createdAt.toISOString(),
+      updatedAt: post.dataValues.updatedAt.toISOString(),
+    };
+  },
+  posts: async (req) => {
+    // if (!req.isAuth) {
+    //   const error = new Error('Not authenticated!');
+    //   error.code = 401;
+    //   throw error;
+    // }
+    console.log('findallposts');
+    const posts = await Post.findAll();
+    console.log('Posts');
+    return posts.map((post) => {
+      console.log(post.dataValues.id);
+      console.log(post.dataValues.title);
+      return {
+        id: post.dataValues.id,
+        title: post.dataValues.title,
+        content: post.dataValues.content,
+      };
+    });
+  },
   // getUsers: async () => {
   //   const users = await User.findAll();
   //   return users.map((user) => {

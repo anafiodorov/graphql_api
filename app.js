@@ -6,7 +6,10 @@ const multer = require('multer');
 const graphqlHttp = require('express-graphql').graphqlHTTP;
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
+const auth = require('./middleware/auth');
 const app = express();
+const User = require('./models/user');
+const Post = require('./models/post');
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -49,6 +52,8 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(auth);
+
 app.use(
   '/graphql',
   graphqlHttp({
@@ -65,7 +70,13 @@ app.use((error, req, res, next) => {
   const data = error.data;
   res.status(status).json({ message: message, data: data });
 });
-
+Post.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user',
+});
+User.hasMany(Post, {
+  as: 'posts',
+});
 sequelize
   .sync()
   .then((result) => {

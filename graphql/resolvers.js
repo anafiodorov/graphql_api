@@ -111,15 +111,15 @@ module.exports = {
     console.log('debug return');
     const debugObj = {
       ...post.dataValues,
-      createdAt: post.dataValues.createdAt.toISOString(),
-      updatedAt: post.dataValues.updatedAt.toISOString(),
+      // createdAt: post.dataValues.createdAt.toISOString(),
+      // updatedAt: post.dataValues.updatedAt.toISOString(),
     };
     console.log(debugObj);
     // user.posts.push(post);
     return {
       ...post.dataValues,
-      createdAt: post.dataValues.createdAt.toISOString(),
-      updatedAt: post.dataValues.updatedAt.toISOString(),
+      // createdAt: post.dataValues.createdAt.toISOString(),
+      // updatedAt: post.dataValues.updatedAt.toISOString(),
     };
   },
   posts: async (req) => {
@@ -138,21 +138,90 @@ module.exports = {
         id: post.dataValues.id,
         title: post.dataValues.title,
         content: post.dataValues.content,
+        createdAt: post.dataValues.createdAt,
       };
     });
   },
-  // getUsers: async () => {
-  //   const users = await User.findAll();
-  //   return users.map((user) => {
-  //     console.log(user.dataValues.name);
-  //     return {
-  //       id: user.dataValues.id,
-  //       name: user.dataValues.name,
-  //       email: user.dataValues.email,
-  //       password: user.dataValues.password,
-  //     };
-  //   });
-  // },
+  updatePost: async ({ id, postInput }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!');
+      error.code = 401;
+      throw error;
+    }
+    const post = await Post.findByPk(id);
+    console.log(post);
+    if (!post) {
+      const error = new Error('No post found!');
+      error.code = 404;
+      throw error;
+    }
+    // if (post.creator.id.toString() !== req.userId.toString()) {
+    //   const error = new Error('Not authorized!');
+    //   error.code = 403;
+    //   throw error;
+    // }
+    const errors = [];
+    if (
+      validator.isEmpty(postInput.title) ||
+      !validator.isLength(postInput.title, { min: 5 })
+    ) {
+      errors.push({ message: 'Title is invalid' });
+    }
+    if (
+      validator.isEmpty(postInput.content) ||
+      !validator.isLength(postInput.content, { min: 5 })
+    ) {
+      errors.push({ message: 'Content is invalid' });
+    }
+    if (errors.length > 0) {
+      console.log(errors);
+      const error = new Error('Invalid input.');
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+
+    const result = await Post.update(
+      {
+        title: postInput.title,
+        content: postInput.content,
+      },
+      {
+        where: { id: id },
+        returning: true,
+      }
+    );
+    console.log(result[1][0]);
+    const postUpdated = result[1][0].dataValues;
+    console.log(postUpdated);
+    return {
+      ...postUpdated,
+    };
+  },
+  deletePost: async ({ id }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated!');
+      error.code = 401;
+      throw error;
+    }
+    const post = await Post.findByPk(id);
+    console.log(post);
+    if (!post) {
+      const error = new Error('No post found!');
+      error.code = 404;
+      throw error;
+    }
+    const result = await Post.destroy({
+      where: { id: id },
+      returning: true,
+    });
+    console.log(result[1][0]);
+    const postDeleted = result[1][0].dataValues;
+    console.log(postDeleted);
+    return {
+      ...postDeleted,
+    };
+  },
 };
 
 /*

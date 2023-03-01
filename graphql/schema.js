@@ -4,10 +4,10 @@ module.exports = buildSchema(`
 type Post {
   id: ID!
   title: String!
-  imageUrl: String!
+  imageUrl: String
   content: String
-  createdAt: String!
-  updatedAt: String!
+  createdAt: String
+  updatedAt: String
 }
   type User {
     id: ID! 
@@ -24,7 +24,8 @@ type Post {
   type postData {
     id: ID!
     title: String!
-    content: String!
+    content: String
+    createdAt: String
   }
   input UserInputData {
     name: String!
@@ -33,8 +34,8 @@ type Post {
   }
   input PostInputData {
     title: String!
-    imageUrl: String!
-    content: String!
+    imageUrl: String
+    content: String
   }
   type RootQuery {
     login(email: String!, password: String): AuthData!
@@ -43,6 +44,8 @@ type Post {
   type RootMutation {
     createUser(userInput : UserInputData): User!
     createPost(postInput: PostInputData): Post!
+    updatePost(id: ID!, postInput: PostInputData): Post!
+    deletePost(id: ID!): Post!
   }
   schema {
     query: RootQuery
